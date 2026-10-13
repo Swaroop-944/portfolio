@@ -27,19 +27,21 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ message: 'Name, email, and message are required.' })
   }
 
-  const emailUser = process.env.EMAIL_USER
-  const emailPass = (process.env.EMAIL_PASS || '').replace(/\s+/g, '')
-  const emailTo = process.env.EMAIL_TO || emailUser
+  const emailUser = process.env.EMAIL_USER || process.env.GMAIL_USER
+  const emailPass = (process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '')
+  const emailTo = process.env.EMAIL_TO || process.env.GMAIL_TO || emailUser
 
   if (!emailUser || !emailPass) {
     return res.status(500).json({
-      message: 'Email credentials are not configured. Please set EMAIL_USER and EMAIL_PASS in the environment.',
+      message: 'Email credentials are not configured. In Render, add EMAIL_USER and EMAIL_PASS as environment variables.',
     })
   }
 
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
         user: emailUser,
         pass: emailPass,
