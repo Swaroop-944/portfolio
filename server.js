@@ -2,11 +2,16 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import nodemailer from 'nodemailer'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 dotenv.config()
 
 const app = express()
 const port = Number(process.env.PORT || 3001)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const distPath = path.join(__dirname, 'dist')
 
 app.use(cors())
 app.use(express.json())
@@ -61,6 +66,12 @@ app.post('/api/contact', async (req, res) => {
     console.error('SMTP error response:', error?.response || error?.message)
     return res.status(500).json({ message: 'Unable to send the email right now. Please try again later.' })
   }
+})
+
+app.use(express.static(distPath))
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) return next()
+  res.sendFile(path.join(distPath, 'index.html'))
 })
 
 app.listen(port, () => {
