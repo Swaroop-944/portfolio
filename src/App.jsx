@@ -102,30 +102,16 @@ function App() {
       const data = await response.json()
 
       if (!response.ok) {
-        const fallbackMessage = `mailto:swaroop0310@gmail.com?subject=${encodeURIComponent(`Portfolio inquiry from ${payload.name}`)}&body=${encodeURIComponent(`Name: ${payload.name}\nEmail: ${payload.email}\n\nMessage:\n${payload.message}`)}`
-
-        if (data?.message?.includes('not configured') || data?.message?.includes('Unable to send')) {
-          setSubmitState({
-            status: 'error',
-            message: 'Email credentials are not configured yet. Your mail app is opening so you can still send the message.',
-          })
-          window.location.href = fallbackMessage
-          return
-        }
-
         throw new Error(data.message || 'Unable to send your message right now.')
       }
 
       setSubmitState({ status: 'success', message: 'Message sent successfully. I will get back to you soon.' })
       form.reset()
     } catch (error) {
-      const fallbackMessage = `mailto:swaroop0310@gmail.com?subject=${encodeURIComponent(`Portfolio inquiry from ${payload.name}`)}&body=${encodeURIComponent(`Name: ${payload.name}\nEmail: ${payload.email}\n\nMessage:\n${payload.message}`)}`
-
       setSubmitState({
         status: 'error',
         message: error.message || 'Something went wrong. Please try again.',
       })
-      window.location.href = fallbackMessage
     }
   }
 
