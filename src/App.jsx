@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Mail, MapPin, Menu, Phone, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import AdminPage from './Admin.jsx'
 import profilePhoto from './assets/profile.jpg'
 import './App.css'
 
@@ -105,7 +106,7 @@ function App() {
         throw new Error(data.message || 'Unable to send your message right now.')
       }
 
-      setSubmitState({ status: 'success', message: 'Message sent successfully. I will get back to you soon.' })
+      setSubmitState({ status: 'success', message: 'Message received successfully. I will get back to you soon.' })
       form.reset()
     } catch (error) {
       setSubmitState({
@@ -113,6 +114,10 @@ function App() {
         message: error.message || 'Something went wrong. Please try again.',
       })
     }
+  }
+
+  if (window.location.pathname === '/admin') {
+    return <AdminPage />
   }
 
   return (
@@ -244,7 +249,7 @@ function App() {
             <label htmlFor="contact-message">Message</label>
             <textarea id="contact-message" name="message" rows="5" required />
             <div className="contact-form-footer">
-              <p>Messages are sent through the site backend and delivered to your email inbox.</p>
+              <p>Messages are saved to the private admin inbox.</p>
               <button className="button button-dark" type="submit" disabled={submitState.status === 'loading'}>
                 {submitState.status === 'loading' ? 'Sending...' : 'Send Message'} <ArrowUpRight size={16} />
               </button>
