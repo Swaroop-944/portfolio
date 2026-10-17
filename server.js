@@ -29,38 +29,60 @@ app.post('/api/contact', async (req, res) => {
 
   const emailUser = process.env.EMAIL_USER || process.env.GMAIL_USER
   const emailPass = (process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || '').trim().replace(/\s+/g, '')
+  const resendApiKey = process.env.RESEND_API_KEY
   const emailTo = process.env.EMAIL_TO || process.env.GMAIL_TO || emailUser
 
-  if (!emailUser || !emailPass) {
+  if (!emailTo || (!resendApiKey && (!emailUser || !emailPass))) {
     return res.status(500).json({
-      message: 'Email credentials are not configured. In Render, add EMAIL_USER and EMAIL_PASS as environment variables.',
+      message: 'Email is not configured. Set RESEND_API_KEY and EMAIL_TO, or set EMAIL_USER and EMAIL_PASS.',
     })
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: emailUser,
-        pass: emailPass,
-      },
-    })
-
-    await transporter.sendMail({
-      from: emailUser,
+    const emailContent = {
       to: emailTo,
       replyTo: email,
       subject: `Portfolio inquiry from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-      html: `
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, '<br />')}</p>
-      `,
-    })
+    }
+
+    if (resendApiKey) {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM || 'Portfolio Contact <onboarding@resend.dev>',
+          to: emailContent.to,
+          reply_to: emailContent.replyTo,
+          subject: emailContent.subject,
+          text: emailContent.text,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error('Resend email failed. status:', response.status)
+        console.error('Resend error response:', await response.text())
+        return res.status(502).json({ message: 'Unable to send the email right now. Please try again later.' })
+      }
+    } else {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: emailUser,
+          pass: emailPass,
+        },
+      })
+
+      await transporter.sendMail({
+        from: emailUser,
+        ...emailContent,
+      })
+    }
 
     return res.status(200).json({ message: 'Message sent successfully.' })
   } catch (error) {
